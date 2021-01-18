@@ -1,0 +1,26 @@
+package HCY.MovieReview.entity;
+
+
+import lombok.*;
+
+import javax.persistence.*;
+
+@ToString(exclude = {"movie"})
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+@Getter
+@Entity
+public class MovieImage {
+
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    private String uuid;
+    private String imgName;
+    private String path;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    private Movie movie;
+
+}
