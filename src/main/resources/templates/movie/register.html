@@ -66,7 +66,7 @@
                 var maxSize = 10485760; // 10MB
 
                 function checkExtension(fileName, fileSize) {
-                    if(fileName > maxSize){
+                    if(fileName >= maxSize){
                         alert("파일 사이즈 초과!!");
                         return false;
                     }
@@ -95,7 +95,7 @@
                         appended = true;
                     }
 
-                    if(!appended) return;
+                    if(!appended) {return;}
 
                     for(var value of formData.values()) {
                         console.log(value);
@@ -124,7 +124,7 @@
 
                     $(uploadResultArr).each(function(i, obj){
 
-                        str += "<li data-name'" + obj.fileName + "' data-path='"
+                        str += "<li data-name='" + obj.fileName + "' data-path='"
                             + obj.folderPath + "' data-uuid='" + obj.uuid + "'>";
                         str += "<div>";
                         str += "<button type='button' data-file=\'" + obj.imageURL + "\' ";
@@ -145,9 +145,9 @@
 
                     $.ajax({
                         url: "/removeFile",
-                        method: "DELETE",
+                        method: "POST",
                         data: {fileName: file},
-                        dataType: "json",
+                        dataType: "text",
                         success: function(result){
                             alert(result);
                             li.remove();
@@ -163,7 +163,7 @@
                     $(".uploadResult li").each(function(i, obj){
                         var target = $(obj);
 
-                        str += "<input type='hidden' name='imageDTOList["+i+"].imageName' value='"
+                        str += "<input type='hidden' name='imageDTOList["+i+"].imgName' value='"
                                 +target.data('name')+"'>";
                         str += "<input type='hidden' name='imageDTOList["+i+"].path' value='"
                                 +target.data('path')+"'>";
@@ -173,6 +173,8 @@
                     });
 
                     $(".box").html(str);
+
+                    //$("form").submit();
 
                 });
 

@@ -17,8 +17,6 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.IntStream;
 
-import static org.junit.jupiter.api.Assertions.*;
-
 @SpringBootTest
 class MovieRepositoryTest {
 
@@ -48,7 +46,7 @@ class MovieRepositoryTest {
     @Test
     public void testListPage() throws Exception {
         Pageable pageable = PageRequest.of(0, 10, Sort.by(Sort.Direction.DESC, "id"));
-        Page<Object[]> result = movieRepository.getListPage(pageable);
+        Page<Object[]> result = movieRepository.getListPage1(pageable);
         for (Object[] objects : result.getContent()) {
             System.out.println(Arrays.toString(objects));
         }
@@ -66,7 +64,7 @@ class MovieRepositoryTest {
     @Test
     public void testListPage3() throws Exception {
         Pageable pageable = PageRequest.of(0, 10, Sort.by(Sort.Direction.DESC, "id"));
-        Page<Object[]> result = movieRepository.getListPage3(pageable);
+        Page<Object[]> result = movieRepository.getListPage(pageable);
         for (Object[] objects : result.getContent()) {
             System.out.println(Arrays.toString(objects));
         }
@@ -78,5 +76,15 @@ class MovieRepositoryTest {
         for(Object[] result : results) {
             System.out.println(Arrays.toString(result));
         }
+    }
+
+    @Test
+    public void testGetMovieListWithAvgRate() throws Exception {
+
+        List<Object[]> result = movieRepository.getMovieListWithAvgRate();
+        for (Object[] objects : result) {
+            System.out.println(Arrays.toString(objects));
+        }
+
     }
 }
