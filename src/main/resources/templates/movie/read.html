@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+<th:block th:replace="~{/layout/basic :: setContent(~{this :: content})}">
+    <th:block th:fragment="content">
+        <h1 class="mt-4">Movie Read Page</h1>
+
+        <div class="form-group">
+            <label >Title</label>
+            <input type="text" class="form-control" name="title" th:value="${dto.title}" readonly>
+        </div>
+        <div class="form-group">
+            <label >Review Count</label>
+            <input type="text" class="form-control" name="reviewCnt" th:value="${dto.reviewCnt}" readonly>
+        </div>
+        <div class="form-group">
+            <label >AVG </label>
+            <input type="text" class="form-control" name="avg" th:value="${dto.avg}" readonly>
+        </div>
+
+        <style>
+            .uploadResult {
+                width: 100%;
+                background-color: gray;
+                margin-top: 10px;
+            }
+
+            .uploadResult ul {
+                display: flex;
+                flex-flow: row;
+                justify-content: center;
+                align-items: center;
+                vertical-align: top;
+                overflow: auto;
+            }
+
+            .uploadResult ul li {
+                list-style: none;
+                padding: 10px;
+                margin-left: 2em;
+            }
+
+            .uploadResult ul li img {
+                width: 100px;
+            }
+        </style>
+
+        <div class="uploadResult">
+            <ul>
+                <li th:each="movieImage : ${dto.imageDTOList}">
+                    <img th:if="${movieImage.path != null}" th:src="|/display?fileName=${movieImage.getThumbnailURL()}|">
+                </li>
+            </ul>
+        </div>
+
+        <div class="reviewModal modal" tabindex="-1" role="dialog">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Movie Review</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label >Reviewr ID</label>
+                            <input class="form-control" type="text" name="memberId" >
+                        </div>
+                        <div class="form-group">
+                            <label >Grade <span class="grade"></span></label>
+                            <div class="starrr"></div>
+                        </div>
+                        <div class="form-group">
+                            <label >Review Text</label>
+                            <input class="form-control" type="text" name="text" placeholder="Good Movie!">
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-primary reviewSaveBtn">Save changes</button>
+                        <button type="button" class="btn btn-warning reviewModifyBtn">Modify</button>
+                        <button type="button" class="btn btn-danger reviewRemoveBtn">Remove</button>
+                        <button type="button" class="btn btn-outline-secondary" data-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <button type="button" class="btn btn-primary">
+            Review Count <span class="badge badge-light">[[${dto.reviewCnt}]]</span>
+        </button>
+        <button type="button" class="btn btn-info addReviewBtn">Review Register</button>
+
+        <div class="list-group reviewList">
+
+        </div>
+
+        <script th:src="@{/starrr.js}"></script>
+        <link th:href="@{/css/starrr.css}" rel="stylesheet">
+        <link rel="stylesheet" href="http://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.2.0/css/font-awesome.min.css">
+
+        <script>
+            $(document).ready(function(e) {
+
+                var grade = 0;
+                var movieId = [[${dto.id}]];
+
+                $('.starrr').starrr({
+                    rating: grade,
+                    change: function(e, value){
+                        if(value){
+                            console.log(value);
+                            grade = value;
+                        }
+                    }
+                });
+
+                //$(".reviewModal").modal("show");
+
+                var reviewModal = $(".reviewModal");
+                var inputMemberId = $("input[name='memberId']");
+                var inputText = $("input[name='text']");
+
+                $(".addReviewBtn").on("click", function() {
+
+                    inputMemberId.val("");
+                    inputText.val("");
+
+                    $(".reviewRemoveBtn, .reviewModifyBtn").hide();
+                    $(".reviewSaveBtn").show();
+
+                    reviewModal.modal("show");
+
+                });
+
+                $(".reviewSaveBtn").on("click", function() {
+
+                    var review = {
+                        movieId: movieId,
+                        memberId: inputMemberId.val(),
+                        text: inputText.val(),
+                        grade: grade
+                    };
+
+                    $.ajax({
+
+                        url: "/reviews/"+movieId,
+                        method: "POST",
+                        data: JSON.stringify(review),
+                        contentType: "application/json; charset=utf-8",
+                        dataType: 'text',
+                        success: function(result) {
+                            console.log(result);
+
+                            self.location.reload(); // URL 다시 호출. 평균 평점, 영화 리뷰 갱신됨..
+                        }
+
+                    });
+
+                    reviewModal.modal("hide");
+
+                });
+
+                var reviewnum; // 다른 버튼에서 사용할 수 있게 상단에..
+
+                $(".reviewList").on("click", ".card-body", function(){
+
+                    $(".reviewSaveBtn").hide();
+                    $(".reviewModifyBtn, .reviewRemoveBtn").show();
+
+                    var targetReview = $(this);
+                    reviewnum = targetReview.data("reviewnum");
+                    inputMemberId.val(targetReview.data("memberId"));
+                    inputText.val(targetReview.find('.card-title').clone().children().remove().end().text());
+                    // -> 중간에 span children tag의 내용을 삭제하기 위한 코드..
+
+                    var grade = targetReview.find('.card-title span').html();
+                    $(".starrr a:nth-child("+grade+")").trigger("click");
+
+                    $(".reviewModal").modal("show");
+
+                });
+
+                $(".reviewModifyBtn").on("click", function() {
+
+                    var data = {
+                        id: reviewnum,
+                        text: inputText.val(),
+                        grade: grade
+                    }
+
+                    $.ajax({
+                        url: "/reviews/modify/"+reviewnum,
+                        method: "PUT",
+                        data: JSON.stringify(data),
+                        dataType: "text",
+                        contentType: "application/json; charset=utf-8",
+                        success: function(result) {
+                            console.log(result);
+                            self.location.reload();
+                        }
+
+                    });
+                    reviewModal.modal('hide');
+                });
+
+                $(".reviewRemoveBtn").on("click", function() {
+                    var data = {id: reviewnum};
+                    $.ajax({
+                        url: '/reviews/remove/'+reviewnum,
+                        type: "DELETE",
+                        contentType: 'application/json; charset=utf-8',
+                        dataType: 'text',
+                        success: function(result){
+                            console.log(result);
+                            self.location.reload();
+                        }
+                    });
+                    reviewModal.modal("hide");
+                });
+
+                function getMovieReviews() {
+
+                    function formatTime(str) {
+                        var date = new Date(str);
+
+                        return date.getFullYear() + '/' + (date.getMonth() + 1) +
+                        '/' + date.getDate() + ' ' + date.getHours() + ':' +
+                        date.getMinutes();
+                    }
+
+                    $.getJSON("/reviews/"+movieId+"/all", function(arr){
+                        var str = "";
+
+                        $.each(arr, function(idx, review){
+
+                            console.log(review);
+
+                            str += "<div class='card-body' data-reviewnum=" +
+                                    review.id + " data-memberId=" + review.memberId + ">";
+                            str += "<h5 class='card-title'>" + review.text + " <span> Grade : " +
+                                    review.grade + "</span></h5>";
+                            str += "<h6 class='card-subtitle mb-2 text-muted'>" + review.nickName +
+                                    "</h6>";
+                            str += "<p class='card-text'>" + formatTime(review.createdDate) + "</p>";
+                            str += "</div>";
+
+                        });
+
+                        $(".reviewList").html(str);
+                    })
+
+                }
+
+                getMovieReviews();
+
+            });
+        </script>
+
+    </th:block>
+</th:block>
+
+</html>

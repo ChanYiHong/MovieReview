@@ -19,6 +19,8 @@ public interface MovieService {
 
     PageResponseDTO<Object[], MovieDTO> list(PageRequestDTO pageRequestDTO);
 
+    MovieDTO read(Long id);
+
     default MovieDTO entitiesToDTO(Movie movie, List<MovieImage> movieImages, double avg, Long reviewCnt){
         MovieDTO movieDTO = MovieDTO.builder()
                 .id(movie.getId())
